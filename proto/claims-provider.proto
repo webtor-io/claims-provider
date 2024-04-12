@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+service ClaimsProvider {
+    rpc Get (GetRequest) returns (GetResponse);
+}
+
+message GetRequest {
+    string email = 1;
+}
+
+message GetResponse {
+    Context context = 1;
+    Claims claims = 2;
+}
+
+message Context {
+    Tier tier = 1;
+}
+
+message Tier {
+    uint32 id = 1;
+    string name = 2;
+}
+
+message Claims {
+    Connection connection = 1;
+    Embed embed = 2;
+}
+
+message Connection {
+    uint64 rate = 1;
+}
+
+message Embed {
+    bool no_ads = 1;
+}
