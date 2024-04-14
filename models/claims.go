@@ -6,4 +6,5 @@ type Claims struct {
 	TierName     string `pg:"tier_name"`
 	DownloadRate uint64 `pg:"download_rate"`
 	EmbedNoAds   bool   `pg:"embed_noads"`
+	SiteNoAds    bool   `pg:"site_noads"`
 }

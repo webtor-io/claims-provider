@@ -25,6 +25,7 @@ message Tier {
 message Claims {
     Connection connection = 1;
     Embed embed = 2;
+    Site site = 3;
 }
 
 message Connection {
@@ -32,5 +33,9 @@ message Connection {
 }
 
 message Embed {
+    bool no_ads = 1;
+}
+
+message Site {
     bool no_ads = 1;
 }

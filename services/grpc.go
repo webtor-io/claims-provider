@@ -129,6 +129,9 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 			Embed: &pb.Embed{ // Embed is a part of claims
 				NoAds: c.EmbedNoAds, // No ads
 			},
+			Site: &pb.Site{ // Site is a part of claims,
+				NoAds: c.SiteNoAds, // No ads
+			},
 		},
 	}, nil
 }

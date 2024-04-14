@@ -20,4 +20,4 @@ claims-provider
 
 node_modules
 
-assets/dist/*
+.env
