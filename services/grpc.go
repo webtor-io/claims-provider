@@ -110,7 +110,7 @@ func (s *GRPC) Close() error {
 // Get gets claims for a user
 func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	// Get claims from store
-	c, err := s.store.Get(req.Email)
+	c, err := s.store.Get(req.Email, req.PatreonId)
 	if err != nil {
 		return nil, err
 	}

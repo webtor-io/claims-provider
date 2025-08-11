@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/webtor-io/claims-provider/models"
@@ -26,21 +27,38 @@ func NewStore(pg *cs.PG) *Store {
 	}
 }
 
-func (s *Store) get(email string) (claims *models.Claims, err error) {
+func (s *Store) get(email string, patreonId string) (claims *models.Claims, err error) {
 	claims = &models.Claims{}
 	db := s.pg.Get()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err = db.QueryOneContext(ctx, claims, `select * from public.get_member_claims(?)`, email)
+	
+	// If patreon_id is provided, use it for lookup (prioritize patreon_id over email)
+	if patreonId != "" {
+		_, err = db.QueryOneContext(ctx, claims, `select * from public.get_member_claims_by_patreon_id(?)`, patreonId)
+	} else if email != "" {
+		_, err = db.QueryOneContext(ctx, claims, `select * from public.get_member_claims(?)`, email)
+	} else {
+		return nil, errors.New("either email or patreon_id must be provided")
+	}
+	
 	if err != nil {
 		return nil, err
 	}
 	return
 }
 
-func (s *Store) Get(email string) (claims *models.Claims, err error) {
-	v, err := s.LazyMap.Get(email, func() (interface{}, error) {
-		return s.get(email)
+func (s *Store) Get(email string, patreonId string) (claims *models.Claims, err error) {
+	// Create cache key based on which identifier is provided
+	var cacheKey string
+	if patreonId != "" {
+		cacheKey = "patreon:" + patreonId
+	} else {
+		cacheKey = "email:" + email
+	}
+	
+	v, err := s.LazyMap.Get(cacheKey, func() (interface{}, error) {
+		return s.get(email, patreonId)
 	})
 	if err != nil {
 		return nil, err

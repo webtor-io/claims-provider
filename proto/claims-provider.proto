@@ -1,11 +1,14 @@
 syntax = "proto3";
 
+option go_package = "github.com/webtor-io/claims-provider/proto";
+
 service ClaimsProvider {
     rpc Get (GetRequest) returns (GetResponse);
 }
 
 message GetRequest {
     string email = 1;
+    string patreon_id = 2;
 }
 
 message GetResponse {
