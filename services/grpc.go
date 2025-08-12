@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+	"github.com/webtor-io/claims-provider/models"
 	pb "github.com/webtor-io/claims-provider/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -76,13 +77,19 @@ func (s *GRPC) Serve() error {
 	serverOpts := []grpc.ServerOption{
 		grpc.UnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 			start := time.Now()
-			resp, err := handler(ctx, req)
-			log.WithFields(log.Fields{
+			fields := log.Fields{
 				"method": info.FullMethod,
-				"took":   time.Since(start),
-			}).Info("finished unary call")
+			}
+			if r, ok := req.(*pb.GetRequest); ok {
+				fields["email"] = r.Email
+				fields["patreon_id"] = r.PatreonId
+			}
+			resp, err := handler(ctx, req)
+			fields["took"] = time.Since(start)
 			if err != nil {
-				log.WithError(err).Error("error in unary call")
+				log.WithFields(fields).WithError(err).Error("grpc unary call failed")
+			} else {
+				log.WithFields(fields).Info("grpc unary call succeeded")
 			}
 			return resp, err
 		}),
@@ -116,15 +123,28 @@ func (s *GRPC) Close() error {
 
 // Get gets claims for a user
 func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	// Always call store; if email is missing, pass empty string
+	// Decide lookup strategy based on request
 	email := ""
+	patreonID := ""
 	if req != nil {
 		email = req.Email
+		patreonID = req.PatreonId
 	}
-	// Get claims from store
-	c, err := s.store.Get(ctx, email)
+	var (
+		c   *models.Claims
+		err error
+	)
+	if patreonID != "" {
+		c, err = s.store.GetByPatreonID(ctx, patreonID)
+	} else {
+		c, err = s.store.GetByEmail(ctx, email)
+	}
 	if err != nil {
-		// Return generic internal error to client, details are logged by interceptor
+		// Log detailed context while keeping client-facing error generic
+		log.WithFields(log.Fields{
+			"email":      email,
+			"patreon_id": patreonID,
+		}).WithError(err).Error("failed to get claims from store")
 		return nil, status.Error(codes.Internal, "failed to get claims")
 	}
 	// Build GRPC response
@@ -134,6 +154,7 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 				Id:   c.TierID,
 				Name: c.TierName,
 			},
+			PatreonId: c.PatreonID,
 		},
 		Claims: &pb.Claims{
 			Connection: &pb.Connection{

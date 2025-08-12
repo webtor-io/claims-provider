@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"github.com/webtor-io/claims-provider/models"
 	cs "github.com/webtor-io/common-services"
@@ -56,9 +57,10 @@ func RegisterStoreFlags(f []cli.Flag) []cli.Flag {
 
 type Store struct {
 	lazymap.LazyMap[*models.Claims]
-	pg        *cs.PG
-	dbTimeout time.Duration
-	fetch     func(ctx context.Context, email string) (*models.Claims, error)
+	pg               *cs.PG
+	dbTimeout        time.Duration
+	fetch            func(ctx context.Context, email string) (*models.Claims, error)
+	fetchByPatreonID func(ctx context.Context, patreonID string) (*models.Claims, error)
 }
 
 func NewStore(c *cli.Context, pg *cs.PG) *Store {
@@ -76,20 +78,52 @@ func NewStore(c *cli.Context, pg *cs.PG) *Store {
 
 func (s *Store) get(ctx context.Context, email string) (claims *models.Claims, err error) {
 	claims = &models.Claims{}
+	if s.pg == nil {
+		return nil, errors.New("database is not initialized")
+	}
 	db := s.pg.Get()
+	if db == nil {
+		return nil, errors.New("database connection is not available")
+	}
 	ctx, cancel := context.WithTimeout(ctx, s.dbTimeout)
 	defer cancel()
-	_, err = db.QueryOneContext(ctx, claims, `select * from public.get_member_claims(?)`, email)
+	_, err = db.QueryOneContext(ctx, claims, `select * from public.get_member_claims_by_email(?)`, email)
 	if err != nil {
 		return nil, err
 	}
 	return
 }
 
-func (s *Store) Get(ctx context.Context, email string) (claims *models.Claims, err error) {
+func (s *Store) getByPatreonID(ctx context.Context, patreonID string) (claims *models.Claims, err error) {
+	claims = &models.Claims{}
+	if s.pg == nil {
+		return nil, errors.New("database is not initialized")
+	}
+	db := s.pg.Get()
+	if db == nil {
+		return nil, errors.New("database connection is not available")
+	}
+	ctx, cancel := context.WithTimeout(ctx, s.dbTimeout)
+	defer cancel()
+	_, err = db.QueryOneContext(ctx, claims, `select * from public.get_member_claims_by_patreon_id(?)`, patreonID)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+func (s *Store) GetByEmail(ctx context.Context, email string) (claims *models.Claims, err error) {
 	builder := func() (*models.Claims, error) { return s.get(ctx, email) }
 	if s.fetch != nil {
 		builder = func() (*models.Claims, error) { return s.fetch(ctx, email) }
 	}
-	return s.LazyMap.Get(email, builder)
+	return s.LazyMap.Get("email:"+email, builder)
+}
+
+func (s *Store) GetByPatreonID(ctx context.Context, patreonID string) (claims *models.Claims, err error) {
+	builder := func() (*models.Claims, error) { return s.getByPatreonID(ctx, patreonID) }
+	if s.fetchByPatreonID != nil {
+		builder = func() (*models.Claims, error) { return s.fetchByPatreonID(ctx, patreonID) }
+	}
+	return s.LazyMap.Get("patreon:"+patreonID, builder)
 }
