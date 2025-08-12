@@ -58,6 +58,7 @@ type Store struct {
 	lazymap.LazyMap[*models.Claims]
 	pg        *cs.PG
 	dbTimeout time.Duration
+	fetch     func(ctx context.Context, email string) (*models.Claims, error)
 }
 
 func NewStore(c *cli.Context, pg *cs.PG) *Store {
@@ -86,7 +87,9 @@ func (s *Store) get(ctx context.Context, email string) (claims *models.Claims, e
 }
 
 func (s *Store) Get(ctx context.Context, email string) (claims *models.Claims, err error) {
-	return s.LazyMap.Get(email, func() (*models.Claims, error) {
-		return s.get(ctx, email)
-	})
+	builder := func() (*models.Claims, error) { return s.get(ctx, email) }
+	if s.fetch != nil {
+		builder = func() (*models.Claims, error) { return s.fetch(ctx, email) }
+	}
+	return s.LazyMap.Get(email, builder)
 }
