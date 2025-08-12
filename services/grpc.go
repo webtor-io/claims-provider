@@ -116,12 +116,13 @@ func (s *GRPC) Close() error {
 
 // Get gets claims for a user
 func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	// Validate input
-	if req == nil || req.Email == "" {
-		return nil, status.Error(codes.InvalidArgument, "email is required")
+	// Always call store; if email is missing, pass empty string
+	email := ""
+	if req != nil {
+		email = req.Email
 	}
 	// Get claims from store
-	c, err := s.store.Get(ctx, req.Email)
+	c, err := s.store.Get(ctx, email)
 	if err != nil {
 		// Return generic internal error to client, details are logged by interceptor
 		return nil, status.Error(codes.Internal, "failed to get claims")

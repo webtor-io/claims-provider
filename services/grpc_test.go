@@ -13,22 +13,42 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestGRPCGet_Validation(t *testing.T) {
-	// Prepare GRPC with a store that won't be used
+func TestGRPCGet_AllowsEmptyEmail(t *testing.T) {
+	// Prepare GRPC with a store that will be called with empty email
 	st := &Store{LazyMap: lazymap.New[*models.Claims](&lazymap.Config{Concurrency: 1, Expire: time.Second, ErrorExpire: time.Second, Capacity: 10})}
+	calledWith := "<unset>"
+	expected := &models.Claims{TierID: 2, TierName: "silver", DownloadRate: 777, EmbedNoAds: true, SiteNoAds: true}
+	st.fetch = func(ctx context.Context, email string) (*models.Claims, error) {
+		calledWith = email
+		return expected, nil
+	}
 	g := &GRPC{store: st}
 
 	// Call with empty email
-	_, err := g.Get(context.Background(), &pb.GetRequest{Email: ""})
-	if err == nil {
-		t.Fatalf("expected error for empty email, got nil")
+	resp, err := g.Get(context.Background(), &pb.GetRequest{Email: ""})
+	if err != nil {
+		t.Fatalf("unexpected error for empty email: %v", err)
 	}
-	stErr, ok := status.FromError(err)
-	if !ok {
-		t.Fatalf("expected gRPC status error, got: %v", err)
+	if calledWith != "" {
+		t.Fatalf("store was not called with empty email, got %q", calledWith)
 	}
-	if stErr.Code() != codes.InvalidArgument {
-		t.Fatalf("expected InvalidArgument, got: %v", stErr.Code())
+	if resp == nil || resp.Context == nil || resp.Context.Tier == nil || resp.Claims == nil || resp.Claims.Connection == nil || resp.Claims.Embed == nil || resp.Claims.Site == nil {
+		t.Fatalf("response has unexpected nil parts: %+v", resp)
+	}
+	if resp.Context.Tier.Id != expected.TierID {
+		t.Errorf("tier id mismatch: got %d want %d", resp.Context.Tier.Id, expected.TierID)
+	}
+	if resp.Context.Tier.Name != expected.TierName {
+		t.Errorf("tier name mismatch: got %q want %q", resp.Context.Tier.Name, expected.TierName)
+	}
+	if resp.Claims.Connection.Rate != expected.DownloadRate {
+		t.Errorf("download rate mismatch: got %d want %d", resp.Claims.Connection.Rate, expected.DownloadRate)
+	}
+	if resp.Claims.Embed.NoAds != expected.EmbedNoAds {
+		t.Errorf("embed no_ads mismatch: got %v want %v", resp.Claims.Embed.NoAds, expected.EmbedNoAds)
+	}
+	if resp.Claims.Site.NoAds != expected.SiteNoAds {
+		t.Errorf("site no_ads mismatch: got %v want %v", resp.Claims.Site.NoAds, expected.SiteNoAds)
 	}
 }
 
