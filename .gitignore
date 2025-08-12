@@ -21,3 +21,5 @@ claims-provider
 node_modules
 
 .env
+.idea
+.vscode

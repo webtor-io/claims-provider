@@ -4,32 +4,79 @@ import (
 	"context"
 	"time"
 
+	"github.com/urfave/cli"
 	"github.com/webtor-io/claims-provider/models"
 	cs "github.com/webtor-io/common-services"
 	"github.com/webtor-io/lazymap"
 )
 
-type Store struct {
-	lazymap.LazyMap
-	pg *cs.PG
+const (
+	storeCacheConcurrencyFlag = "store-cache-concurrency"
+	storeCacheExpireFlag      = "store-cache-expire"
+	storeCacheErrorExpireFlag = "store-cache-error-expire"
+	storeCacheCapacityFlag    = "store-cache-capacity"
+	storeDBTimeoutFlag        = "store-db-timeout"
+)
+
+// RegisterStoreFlags registers CLI flags/env vars for tuning the store/cache behavior.
+func RegisterStoreFlags(f []cli.Flag) []cli.Flag {
+	return append(f,
+		cli.IntFlag{
+			Name:   storeCacheConcurrencyFlag,
+			Usage:  "maximum concurrent cache builders",
+			Value:  10,
+			EnvVar: "STORE_CACHE_CONCURRENCY",
+		},
+		cli.DurationFlag{
+			Name:   storeCacheExpireFlag,
+			Usage:  "cache expiration for successful entries (e.g. 60s, 5m)",
+			Value:  60 * time.Second,
+			EnvVar: "STORE_CACHE_EXPIRE",
+		},
+		cli.DurationFlag{
+			Name:   storeCacheErrorExpireFlag,
+			Usage:  "cache expiration for error entries (e.g. 10s)",
+			Value:  10 * time.Second,
+			EnvVar: "STORE_CACHE_ERROR_EXPIRE",
+		},
+		cli.IntFlag{
+			Name:   storeCacheCapacityFlag,
+			Usage:  "cache capacity (max entries)",
+			Value:  1000,
+			EnvVar: "STORE_CACHE_CAPACITY",
+		},
+		cli.DurationFlag{
+			Name:   storeDBTimeoutFlag,
+			Usage:  "database query timeout (e.g. 5s)",
+			Value:  5 * time.Second,
+			EnvVar: "STORE_DB_TIMEOUT",
+		},
+	)
 }
 
-func NewStore(pg *cs.PG) *Store {
+type Store struct {
+	lazymap.LazyMap[*models.Claims]
+	pg        *cs.PG
+	dbTimeout time.Duration
+}
+
+func NewStore(c *cli.Context, pg *cs.PG) *Store {
 	return &Store{
 		pg: pg,
-		LazyMap: lazymap.New(&lazymap.Config{
-			Concurrency: 10,
-			Expire:      60 * time.Second,
-			ErrorExpire: 10 * time.Second,
-			Capacity:    1000,
+		LazyMap: lazymap.New[*models.Claims](&lazymap.Config{
+			Concurrency: c.Int(storeCacheConcurrencyFlag),
+			Expire:      c.Duration(storeCacheExpireFlag),
+			ErrorExpire: c.Duration(storeCacheErrorExpireFlag),
+			Capacity:    c.Int(storeCacheCapacityFlag),
 		}),
+		dbTimeout: c.Duration(storeDBTimeoutFlag),
 	}
 }
 
-func (s *Store) get(email string) (claims *models.Claims, err error) {
+func (s *Store) get(ctx context.Context, email string) (claims *models.Claims, err error) {
 	claims = &models.Claims{}
 	db := s.pg.Get()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, s.dbTimeout)
 	defer cancel()
 	_, err = db.QueryOneContext(ctx, claims, `select * from public.get_member_claims(?)`, email)
 	if err != nil {
@@ -38,12 +85,8 @@ func (s *Store) get(email string) (claims *models.Claims, err error) {
 	return
 }
 
-func (s *Store) Get(email string) (claims *models.Claims, err error) {
-	v, err := s.LazyMap.Get(email, func() (interface{}, error) {
-		return s.get(email)
+func (s *Store) Get(ctx context.Context, email string) (claims *models.Claims, err error) {
+	return s.LazyMap.Get(email, func() (*models.Claims, error) {
+		return s.get(ctx, email)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return v.(*models.Claims), nil
 }

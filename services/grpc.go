@@ -11,6 +11,8 @@ import (
 	"github.com/urfave/cli"
 	pb "github.com/webtor-io/claims-provider/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -40,6 +42,7 @@ type GRPC struct {
 	host  string
 	port  int
 	ln    net.Listener
+	srv   *grpc.Server
 	store *Store
 }
 
@@ -85,6 +88,8 @@ func (s *GRPC) Serve() error {
 		}),
 	}
 	gs := grpc.NewServer(serverOpts...)
+	// store server pointer for graceful shutdown
+	s.srv = gs
 
 	// Register the service
 	pb.RegisterClaimsProviderServer(gs, s)
@@ -98,39 +103,46 @@ func (s *GRPC) Serve() error {
 
 // Close stops the gRPC server and releases the listener
 func (s *GRPC) Close() error {
+	// Attempt graceful stop if server exists
+	if s.srv != nil {
+		s.srv.GracefulStop()
+	}
 	// Close the listener if it's open
 	if s.ln != nil {
-		// Close the listener
 		return s.ln.Close()
 	}
-	// No error if the listener is not open
 	return nil
 }
 
 // Get gets claims for a user
 func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+	// Validate input
+	if req == nil || req.Email == "" {
+		return nil, status.Error(codes.InvalidArgument, "email is required")
+	}
 	// Get claims from store
-	c, err := s.store.Get(req.Email)
+	c, err := s.store.Get(ctx, req.Email)
 	if err != nil {
-		return nil, err
+		// Return generic internal error to client, details are logged by interceptor
+		return nil, status.Error(codes.Internal, "failed to get claims")
 	}
 	// Build GRPC response
 	return &pb.GetResponse{
-		Context: &pb.Context{ // Context is a part of claim response
-			Tier: &pb.Tier{ // Tier is a part of context
-				Id:   c.TierID,   // Tier ID
-				Name: c.TierName, // Tier name
+		Context: &pb.Context{
+			Tier: &pb.Tier{
+				Id:   c.TierID,
+				Name: c.TierName,
 			},
 		},
-		Claims: &pb.Claims{ // Claims is a part of claim response
-			Connection: &pb.Connection{ // Connection is a part of claims
-				Rate: c.DownloadRate, // Download rate
+		Claims: &pb.Claims{
+			Connection: &pb.Connection{
+				Rate: c.DownloadRate,
 			},
-			Embed: &pb.Embed{ // Embed is a part of claims
-				NoAds: c.EmbedNoAds, // No ads
+			Embed: &pb.Embed{
+				NoAds: c.EmbedNoAds,
 			},
-			Site: &pb.Site{ // Site is a part of claims,
-				NoAds: c.SiteNoAds, // No ads
+			Site: &pb.Site{
+				NoAds: c.SiteNoAds,
 			},
 		},
 	}, nil
