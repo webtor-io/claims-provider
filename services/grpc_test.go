@@ -13,6 +13,28 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func TestGRPCGet_ByPatreonID(t *testing.T) {
+	st := &Store{LazyMap: lazymap.New[*models.Claims](&lazymap.Config{Concurrency: 1, Expire: time.Second, ErrorExpire: time.Second, Capacity: 10})}
+	calledWith := "<unset>"
+	expected := &models.Claims{PatreonID: "pat_123", TierID: 1, TierName: "bronze", DownloadRate: 100, EmbedNoAds: false, SiteNoAds: false}
+	st.fetchByPatreonID = func(ctx context.Context, patreonID string) (*models.Claims, error) {
+		calledWith = patreonID
+		return expected, nil
+	}
+	g := &GRPC{store: st}
+
+	resp, err := g.Get(context.Background(), &pb.GetRequest{PatreonId: expected.PatreonID})
+	if err != nil {
+		t.Fatalf("unexpected error for patreon id: %v", err)
+	}
+	if calledWith != expected.PatreonID {
+		t.Fatalf("store was not called with patreon id, got %q", calledWith)
+	}
+	if resp.Context == nil || resp.Context.PatreonId != expected.PatreonID {
+		t.Fatalf("patreon id not propagated to response context: %+v", resp.Context)
+	}
+}
+
 func TestGRPCGet_AllowsEmptyEmail(t *testing.T) {
 	// Prepare GRPC with a store that will be called with empty email
 	st := &Store{LazyMap: lazymap.New[*models.Claims](&lazymap.Config{Concurrency: 1, Expire: time.Second, ErrorExpire: time.Second, Capacity: 10})}

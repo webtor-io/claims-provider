@@ -17,6 +17,8 @@ tmp
 .DS_Store
 __debug_bin
 claims-provider
+claims-client
+
 
 node_modules
 

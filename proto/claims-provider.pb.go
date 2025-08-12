@@ -24,6 +24,7 @@ const (
 type GetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	PatreonId     string                 `protobuf:"bytes,2,opt,name=patreon_id,json=patreonId,proto3" json:"patreon_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,6 +62,13 @@ func (*GetRequest) Descriptor() ([]byte, []int) {
 func (x *GetRequest) GetEmail() string {
 	if x != nil {
 		return x.Email
+	}
+	return ""
+}
+
+func (x *GetRequest) GetPatreonId() string {
+	if x != nil {
+		return x.PatreonId
 	}
 	return ""
 }
@@ -120,6 +128,7 @@ func (x *GetResponse) GetClaims() *Claims {
 type Context struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Tier          *Tier                  `protobuf:"bytes,1,opt,name=tier,proto3" json:"tier,omitempty"`
+	PatreonId     string                 `protobuf:"bytes,2,opt,name=patreon_id,json=patreonId,proto3" json:"patreon_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -159,6 +168,13 @@ func (x *Context) GetTier() *Tier {
 		return x.Tier
 	}
 	return nil
+}
+
+func (x *Context) GetPatreonId() string {
+	if x != nil {
+		return x.PatreonId
+	}
+	return ""
 }
 
 type Tier struct {
@@ -409,15 +425,19 @@ var File_proto_claims_provider_proto protoreflect.FileDescriptor
 
 const file_proto_claims_provider_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproto/claims-provider.proto\"\"\n" +
+	"\x1bproto/claims-provider.proto\"A\n" +
 	"\n" +
 	"GetRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\"R\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1d\n" +
+	"\n" +
+	"patreon_id\x18\x02 \x01(\tR\tpatreonId\"R\n" +
 	"\vGetResponse\x12\"\n" +
 	"\acontext\x18\x01 \x01(\v2\b.ContextR\acontext\x12\x1f\n" +
-	"\x06claims\x18\x02 \x01(\v2\a.ClaimsR\x06claims\"$\n" +
+	"\x06claims\x18\x02 \x01(\v2\a.ClaimsR\x06claims\"C\n" +
 	"\aContext\x12\x19\n" +
-	"\x04tier\x18\x01 \x01(\v2\x05.TierR\x04tier\"*\n" +
+	"\x04tier\x18\x01 \x01(\v2\x05.TierR\x04tier\x12\x1d\n" +
+	"\n" +
+	"patreon_id\x18\x02 \x01(\tR\tpatreonId\"*\n" +
 	"\x04Tier\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"n\n" +
