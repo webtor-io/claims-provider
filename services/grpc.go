@@ -140,11 +140,9 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 			cs = append(cs, c)
 		}
 	}
-	if email != "" {
-		c, err = s.store.GetByEmail(ctx, email)
-		if c != nil {
-			cs = append(cs, c)
-		}
+	c, err = s.store.GetByEmail(ctx, email)
+	if c != nil {
+		cs = append(cs, c)
 	}
 	if err == nil && len(cs) == 0 {
 		err = errors.New("no claims found")
