@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
@@ -155,6 +156,12 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 		}).WithError(err).Error("failed to get claims from store")
 		return nil, status.Error(codes.Internal, "failed to get claims")
 	}
+
+	// Sort claims by tier ID in descending order
+	sort.Slice(cs, func(i, j int) bool {
+		return cs[i].TierID > cs[j].TierID
+	})
+
 	c = cs[0]
 
 	// Build GRPC response
