@@ -135,3 +135,65 @@ func TestGRPCGet_StoreError(t *testing.T) {
 		t.Fatalf("expected Internal, got: %v", stErr.Code())
 	}
 }
+
+func TestGRPCGet_TwoResultsDifferentTiers(t *testing.T) {
+	st := &Store{LazyMap: lazymap.New[*models.Claims](&lazymap.Config{Concurrency: 1, Expire: time.Second, ErrorExpire: time.Second, Capacity: 10})}
+
+	// Lower tier claim from Patreon ID
+	patreonClaim := &models.Claims{
+		PatreonUserID: "pat_123",
+		TierID:        2,
+		TierName:      "silver",
+		DownloadRate:  200,
+		EmbedNoAds:    true,
+		SiteNoAds:     false,
+	}
+
+	// Higher tier claim from email
+	emailClaim := &models.Claims{
+		Email:        "user@example.com",
+		TierID:       5,
+		TierName:     "platinum",
+		DownloadRate: 500,
+		EmbedNoAds:   true,
+		SiteNoAds:    true,
+	}
+
+	st.fetchByPatreonID = func(ctx context.Context, patreonID string) (*models.Claims, error) {
+		return patreonClaim, nil
+	}
+	st.fetch = func(ctx context.Context, email string) (*models.Claims, error) {
+		return emailClaim, nil
+	}
+
+	g := &GRPC{store: st}
+
+	resp, err := g.Get(context.Background(), &pb.GetRequest{
+		PatreonUserId: patreonClaim.PatreonUserID,
+		Email:         emailClaim.Email,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if resp == nil || resp.Context == nil || resp.Context.Tier == nil || resp.Claims == nil {
+		t.Fatalf("response has unexpected nil parts: %+v", resp)
+	}
+
+	// Should return the higher tier claim (email claim with tier 5)
+	if resp.Context.Tier.Id != emailClaim.TierID {
+		t.Errorf("expected higher tier id %d, got %d", emailClaim.TierID, resp.Context.Tier.Id)
+	}
+	if resp.Context.Tier.Name != emailClaim.TierName {
+		t.Errorf("expected higher tier name %q, got %q", emailClaim.TierName, resp.Context.Tier.Name)
+	}
+	if resp.Claims.Connection.Rate != emailClaim.DownloadRate {
+		t.Errorf("expected higher tier download rate %d, got %d", emailClaim.DownloadRate, resp.Claims.Connection.Rate)
+	}
+	if resp.Claims.Embed.NoAds != emailClaim.EmbedNoAds {
+		t.Errorf("expected higher tier embed no_ads %v, got %v", emailClaim.EmbedNoAds, resp.Claims.Embed.NoAds)
+	}
+	if resp.Claims.Site.NoAds != emailClaim.SiteNoAds {
+		t.Errorf("expected higher tier site no_ads %v, got %v", emailClaim.SiteNoAds, resp.Claims.Site.NoAds)
+	}
+}
