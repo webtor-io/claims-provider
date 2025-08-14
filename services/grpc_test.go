@@ -21,6 +21,10 @@ func TestGRPCGet_ByPatreonID(t *testing.T) {
 		calledWith = patreonID
 		return expected, nil
 	}
+	// Also mock the fetch function to return nil (no claims found for email)
+	st.fetch = func(ctx context.Context, email string) (*models.Claims, error) {
+		return nil, nil
+	}
 	g := &GRPC{store: st}
 
 	resp, err := g.Get(context.Background(), &pb.GetRequest{PatreonUserId: expected.PatreonUserID})
