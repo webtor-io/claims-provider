@@ -24,7 +24,7 @@ const (
 type GetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	PatreonId     string                 `protobuf:"bytes,2,opt,name=patreon_id,json=patreonId,proto3" json:"patreon_id,omitempty"`
+	PatreonUserId string                 `protobuf:"bytes,2,opt,name=patreon_user_id,json=patreonUserId,proto3" json:"patreon_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -66,9 +66,9 @@ func (x *GetRequest) GetEmail() string {
 	return ""
 }
 
-func (x *GetRequest) GetPatreonId() string {
+func (x *GetRequest) GetPatreonUserId() string {
 	if x != nil {
-		return x.PatreonId
+		return x.PatreonUserId
 	}
 	return ""
 }
@@ -128,7 +128,7 @@ func (x *GetResponse) GetClaims() *Claims {
 type Context struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Tier          *Tier                  `protobuf:"bytes,1,opt,name=tier,proto3" json:"tier,omitempty"`
-	PatreonId     string                 `protobuf:"bytes,2,opt,name=patreon_id,json=patreonId,proto3" json:"patreon_id,omitempty"`
+	PatreonUserId string                 `protobuf:"bytes,2,opt,name=patreon_user_id,json=patreonUserId,proto3" json:"patreon_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -170,9 +170,9 @@ func (x *Context) GetTier() *Tier {
 	return nil
 }
 
-func (x *Context) GetPatreonId() string {
+func (x *Context) GetPatreonUserId() string {
 	if x != nil {
-		return x.PatreonId
+		return x.PatreonUserId
 	}
 	return ""
 }
@@ -425,19 +425,17 @@ var File_proto_claims_provider_proto protoreflect.FileDescriptor
 
 const file_proto_claims_provider_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproto/claims-provider.proto\"A\n" +
+	"\x1bproto/claims-provider.proto\"J\n" +
 	"\n" +
 	"GetRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1d\n" +
-	"\n" +
-	"patreon_id\x18\x02 \x01(\tR\tpatreonId\"R\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\x12&\n" +
+	"\x0fpatreon_user_id\x18\x02 \x01(\tR\rpatreonUserId\"R\n" +
 	"\vGetResponse\x12\"\n" +
 	"\acontext\x18\x01 \x01(\v2\b.ContextR\acontext\x12\x1f\n" +
-	"\x06claims\x18\x02 \x01(\v2\a.ClaimsR\x06claims\"C\n" +
+	"\x06claims\x18\x02 \x01(\v2\a.ClaimsR\x06claims\"L\n" +
 	"\aContext\x12\x19\n" +
-	"\x04tier\x18\x01 \x01(\v2\x05.TierR\x04tier\x12\x1d\n" +
-	"\n" +
-	"patreon_id\x18\x02 \x01(\tR\tpatreonId\"*\n" +
+	"\x04tier\x18\x01 \x01(\v2\x05.TierR\x04tier\x12&\n" +
+	"\x0fpatreon_user_id\x18\x02 \x01(\tR\rpatreonUserId\"*\n" +
 	"\x04Tier\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"n\n" +

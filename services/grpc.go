@@ -82,7 +82,7 @@ func (s *GRPC) Serve() error {
 			}
 			if r, ok := req.(*pb.GetRequest); ok {
 				fields["email"] = r.Email
-				fields["patreon_id"] = r.PatreonId
+				fields["patreon_user_id"] = r.PatreonUserId
 			}
 			resp, err := handler(ctx, req)
 			fields["took"] = time.Since(start)
@@ -125,17 +125,17 @@ func (s *GRPC) Close() error {
 func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	// Decide lookup strategy based on request
 	email := ""
-	patreonID := ""
+	patreonUserID := ""
 	if req != nil {
 		email = req.Email
-		patreonID = req.PatreonId
+		patreonUserID = req.PatreonUserId
 	}
 	var (
 		c   *models.Claims
 		err error
 	)
-	if patreonID != "" {
-		c, err = s.store.GetByPatreonID(ctx, patreonID)
+	if patreonUserID != "" {
+		c, err = s.store.GetByPatreonID(ctx, patreonUserID)
 	} else {
 		c, err = s.store.GetByEmail(ctx, email)
 	}
@@ -143,7 +143,7 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 		// Log detailed context while keeping client-facing error generic
 		log.WithFields(log.Fields{
 			"email":      email,
-			"patreon_id": patreonID,
+			"patreon_id": patreonUserID,
 		}).WithError(err).Error("failed to get claims from store")
 		return nil, status.Error(codes.Internal, "failed to get claims")
 	}
@@ -154,7 +154,7 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 				Id:   c.TierID,
 				Name: c.TierName,
 			},
-			PatreonId: c.PatreonID,
+			PatreonUserId: c.PatreonUserID,
 		},
 		Claims: &pb.Claims{
 			Connection: &pb.Connection{

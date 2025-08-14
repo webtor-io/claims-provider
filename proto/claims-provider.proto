@@ -8,7 +8,7 @@ service ClaimsProvider {
 
 message GetRequest {
     string email = 1;
-    string patreon_id = 2;
+    string patreon_user_id = 2;
 }
 
 message GetResponse {
@@ -18,7 +18,7 @@ message GetResponse {
 
 message Context {
     Tier tier = 1;
-    string patreon_id = 2;
+    string patreon_user_id = 2;
 }
 
 message Tier {

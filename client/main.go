@@ -69,8 +69,8 @@ func main() {
 
 	// Server prefers patreon_id when both are present; we emulate same behavior.
 	req := &pb.GetRequest{
-		Email:     email,
-		PatreonId: patreonID,
+		Email:         email,
+		PatreonUserId: patreonID,
 	}
 
 	resp, err := client.Get(ctx, req)
@@ -100,7 +100,7 @@ func printResponse(r *pb.GetResponse) {
 		if r.Context.Tier != nil {
 			fmt.Printf("  Tier: id=%d name=%s\n", r.Context.Tier.Id, r.Context.Tier.Name)
 		}
-		fmt.Printf("  Patreon ID: %s\n", r.Context.PatreonId)
+		fmt.Printf("  Patreon ID: %s\n", r.Context.PatreonUserId)
 	}
 
 	fmt.Println("Claims:")
