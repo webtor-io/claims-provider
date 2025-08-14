@@ -123,7 +123,6 @@ func (s *GRPC) Close() error {
 
 // Get gets claims for a user
 func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	// Decide lookup strategy based on request
 	email := ""
 	patreonUserID := ""
 	if req != nil {
@@ -132,12 +131,23 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 	}
 	var (
 		c   *models.Claims
+		cs  []*models.Claims
 		err error
 	)
 	if patreonUserID != "" {
 		c, err = s.store.GetByPatreonID(ctx, patreonUserID)
-	} else {
+		if c != nil {
+			cs = append(cs, c)
+		}
+	}
+	if email != "" {
 		c, err = s.store.GetByEmail(ctx, email)
+		if c != nil {
+			cs = append(cs, c)
+		}
+	}
+	if err == nil && len(cs) == 0 {
+		err = errors.New("no claims found")
 	}
 	if err != nil {
 		// Log detailed context while keeping client-facing error generic
@@ -147,6 +157,8 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 		}).WithError(err).Error("failed to get claims from store")
 		return nil, status.Error(codes.Internal, "failed to get claims")
 	}
+	c = cs[0]
+
 	// Build GRPC response
 	return &pb.GetResponse{
 		Context: &pb.Context{
