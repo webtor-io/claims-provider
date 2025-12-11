@@ -13,10 +13,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// helpers
+func u64(v uint64) *uint64 { return &v }
+func val64(p *uint64) uint64 {
+	if p == nil {
+		return 0
+	}
+	return *p
+}
+
 func TestGRPCGet_ByPatreonID(t *testing.T) {
 	st := &Store{LazyMap: lazymap.New[*models.Claims](&lazymap.Config{Concurrency: 1, Expire: time.Second, ErrorExpire: time.Second, Capacity: 10})}
 	calledWith := "<unset>"
-	expected := &models.Claims{PatreonUserID: "pat_123", TierID: 1, TierName: "bronze", DownloadRate: 100, EmbedNoAds: false, SiteNoAds: false}
+	expected := &models.Claims{PatreonUserID: "pat_123", TierID: 1, TierName: "bronze", DownloadRate: u64(100), EmbedNoAds: false, SiteNoAds: false}
 	st.fetchByPatreonID = func(ctx context.Context, patreonID string) (*models.Claims, error) {
 		calledWith = patreonID
 		return expected, nil
@@ -43,7 +52,7 @@ func TestGRPCGet_AllowsEmptyEmail(t *testing.T) {
 	// Prepare GRPC with a store that will be called with empty email
 	st := &Store{LazyMap: lazymap.New[*models.Claims](&lazymap.Config{Concurrency: 1, Expire: time.Second, ErrorExpire: time.Second, Capacity: 10})}
 	calledWith := "<unset>"
-	expected := &models.Claims{TierID: 2, TierName: "silver", DownloadRate: 777, EmbedNoAds: true, SiteNoAds: true}
+	expected := &models.Claims{TierID: 2, TierName: "silver", DownloadRate: u64(777), EmbedNoAds: true, SiteNoAds: true}
 	st.fetch = func(ctx context.Context, email string) (*models.Claims, error) {
 		calledWith = email
 		return expected, nil
@@ -67,8 +76,8 @@ func TestGRPCGet_AllowsEmptyEmail(t *testing.T) {
 	if resp.Context.Tier.Name != expected.TierName {
 		t.Errorf("tier name mismatch: got %q want %q", resp.Context.Tier.Name, expected.TierName)
 	}
-	if resp.Claims.Connection.Rate != expected.DownloadRate {
-		t.Errorf("download rate mismatch: got %d want %d", resp.Claims.Connection.Rate, expected.DownloadRate)
+	if val64(resp.Claims.Connection.Rate) != val64(expected.DownloadRate) {
+		t.Errorf("download rate mismatch: got %d want %d", val64(resp.Claims.Connection.Rate), val64(expected.DownloadRate))
 	}
 	if resp.Claims.Embed.NoAds != expected.EmbedNoAds {
 		t.Errorf("embed no_ads mismatch: got %v want %v", resp.Claims.Embed.NoAds, expected.EmbedNoAds)
@@ -83,7 +92,7 @@ func TestGRPCGet_SuccessMapping(t *testing.T) {
 		Email:        "user@example.com",
 		TierID:       3,
 		TierName:     "gold",
-		DownloadRate: 123456,
+		DownloadRate: u64(123456),
 		EmbedNoAds:   true,
 		SiteNoAds:    false,
 	}
@@ -107,8 +116,8 @@ func TestGRPCGet_SuccessMapping(t *testing.T) {
 	if resp.Context.Tier.Name != expected.TierName {
 		t.Errorf("tier name mismatch: got %q want %q", resp.Context.Tier.Name, expected.TierName)
 	}
-	if resp.Claims.Connection.Rate != expected.DownloadRate {
-		t.Errorf("download rate mismatch: got %d want %d", resp.Claims.Connection.Rate, expected.DownloadRate)
+	if val64(resp.Claims.Connection.Rate) != val64(expected.DownloadRate) {
+		t.Errorf("download rate mismatch: got %d want %d", val64(resp.Claims.Connection.Rate), val64(expected.DownloadRate))
 	}
 	if resp.Claims.Embed.NoAds != expected.EmbedNoAds {
 		t.Errorf("embed no_ads mismatch: got %v want %v", resp.Claims.Embed.NoAds, expected.EmbedNoAds)
@@ -144,7 +153,7 @@ func TestGRPCGet_TwoResultsDifferentTiers(t *testing.T) {
 		PatreonUserID: "pat_123",
 		TierID:        2,
 		TierName:      "silver",
-		DownloadRate:  200,
+		DownloadRate:  u64(200),
 		EmbedNoAds:    true,
 		SiteNoAds:     false,
 	}
@@ -154,7 +163,7 @@ func TestGRPCGet_TwoResultsDifferentTiers(t *testing.T) {
 		Email:        "user@example.com",
 		TierID:       5,
 		TierName:     "platinum",
-		DownloadRate: 500,
+		DownloadRate: u64(500),
 		EmbedNoAds:   true,
 		SiteNoAds:    true,
 	}
@@ -187,8 +196,8 @@ func TestGRPCGet_TwoResultsDifferentTiers(t *testing.T) {
 	if resp.Context.Tier.Name != emailClaim.TierName {
 		t.Errorf("expected higher tier name %q, got %q", emailClaim.TierName, resp.Context.Tier.Name)
 	}
-	if resp.Claims.Connection.Rate != emailClaim.DownloadRate {
-		t.Errorf("expected higher tier download rate %d, got %d", emailClaim.DownloadRate, resp.Claims.Connection.Rate)
+	if val64(resp.Claims.Connection.Rate) != val64(emailClaim.DownloadRate) {
+		t.Errorf("expected higher tier download rate %d, got %d", val64(emailClaim.DownloadRate), val64(resp.Claims.Connection.Rate))
 	}
 	if resp.Claims.Embed.NoAds != emailClaim.EmbedNoAds {
 		t.Errorf("expected higher tier embed no_ads %v, got %v", emailClaim.EmbedNoAds, resp.Claims.Embed.NoAds)
