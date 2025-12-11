@@ -6,7 +6,8 @@ type Claims struct {
 	PatreonUserID string   `pg:"patreon_user_id"`
 	TierID        uint32   `pg:"tier_id"`
 	TierName      string   `pg:"tier_name"`
-	DownloadRate  uint64   `pg:"download_rate"`
+	DownloadRate  *uint64  `pg:"download_rate"`
+	VaultPoints   *uint64  `pg:"vault_points"`
 	EmbedNoAds    bool     `pg:"embed_noads"`
 	SiteNoAds     bool     `pg:"site_noads"`
 }

@@ -229,18 +229,63 @@ func (x *Tier) GetName() string {
 	return ""
 }
 
+type Vault struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Points        *uint64                `protobuf:"varint,1,opt,name=points,proto3,oneof" json:"points,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Vault) Reset() {
+	*x = Vault{}
+	mi := &file_proto_claims_provider_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Vault) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Vault) ProtoMessage() {}
+
+func (x *Vault) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_claims_provider_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Vault.ProtoReflect.Descriptor instead.
+func (*Vault) Descriptor() ([]byte, []int) {
+	return file_proto_claims_provider_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Vault) GetPoints() uint64 {
+	if x != nil && x.Points != nil {
+		return *x.Points
+	}
+	return 0
+}
+
 type Claims struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Connection    *Connection            `protobuf:"bytes,1,opt,name=connection,proto3" json:"connection,omitempty"`
 	Embed         *Embed                 `protobuf:"bytes,2,opt,name=embed,proto3" json:"embed,omitempty"`
 	Site          *Site                  `protobuf:"bytes,3,opt,name=site,proto3" json:"site,omitempty"`
+	Vault         *Vault                 `protobuf:"bytes,4,opt,name=vault,proto3" json:"vault,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Claims) Reset() {
 	*x = Claims{}
-	mi := &file_proto_claims_provider_proto_msgTypes[4]
+	mi := &file_proto_claims_provider_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -252,7 +297,7 @@ func (x *Claims) String() string {
 func (*Claims) ProtoMessage() {}
 
 func (x *Claims) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_claims_provider_proto_msgTypes[4]
+	mi := &file_proto_claims_provider_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -265,7 +310,7 @@ func (x *Claims) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Claims.ProtoReflect.Descriptor instead.
 func (*Claims) Descriptor() ([]byte, []int) {
-	return file_proto_claims_provider_proto_rawDescGZIP(), []int{4}
+	return file_proto_claims_provider_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Claims) GetConnection() *Connection {
@@ -289,16 +334,23 @@ func (x *Claims) GetSite() *Site {
 	return nil
 }
 
+func (x *Claims) GetVault() *Vault {
+	if x != nil {
+		return x.Vault
+	}
+	return nil
+}
+
 type Connection struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Rate          uint64                 `protobuf:"varint,1,opt,name=rate,proto3" json:"rate,omitempty"`
+	Rate          *uint64                `protobuf:"varint,1,opt,name=rate,proto3,oneof" json:"rate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Connection) Reset() {
 	*x = Connection{}
-	mi := &file_proto_claims_provider_proto_msgTypes[5]
+	mi := &file_proto_claims_provider_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -310,7 +362,7 @@ func (x *Connection) String() string {
 func (*Connection) ProtoMessage() {}
 
 func (x *Connection) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_claims_provider_proto_msgTypes[5]
+	mi := &file_proto_claims_provider_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -323,12 +375,12 @@ func (x *Connection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Connection.ProtoReflect.Descriptor instead.
 func (*Connection) Descriptor() ([]byte, []int) {
-	return file_proto_claims_provider_proto_rawDescGZIP(), []int{5}
+	return file_proto_claims_provider_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Connection) GetRate() uint64 {
-	if x != nil {
-		return x.Rate
+	if x != nil && x.Rate != nil {
+		return *x.Rate
 	}
 	return 0
 }
@@ -342,7 +394,7 @@ type Embed struct {
 
 func (x *Embed) Reset() {
 	*x = Embed{}
-	mi := &file_proto_claims_provider_proto_msgTypes[6]
+	mi := &file_proto_claims_provider_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -354,7 +406,7 @@ func (x *Embed) String() string {
 func (*Embed) ProtoMessage() {}
 
 func (x *Embed) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_claims_provider_proto_msgTypes[6]
+	mi := &file_proto_claims_provider_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +419,7 @@ func (x *Embed) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Embed.ProtoReflect.Descriptor instead.
 func (*Embed) Descriptor() ([]byte, []int) {
-	return file_proto_claims_provider_proto_rawDescGZIP(), []int{6}
+	return file_proto_claims_provider_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Embed) GetNoAds() bool {
@@ -386,7 +438,7 @@ type Site struct {
 
 func (x *Site) Reset() {
 	*x = Site{}
-	mi := &file_proto_claims_provider_proto_msgTypes[7]
+	mi := &file_proto_claims_provider_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -398,7 +450,7 @@ func (x *Site) String() string {
 func (*Site) ProtoMessage() {}
 
 func (x *Site) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_claims_provider_proto_msgTypes[7]
+	mi := &file_proto_claims_provider_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -411,7 +463,7 @@ func (x *Site) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Site.ProtoReflect.Descriptor instead.
 func (*Site) Descriptor() ([]byte, []int) {
-	return file_proto_claims_provider_proto_rawDescGZIP(), []int{7}
+	return file_proto_claims_provider_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Site) GetNoAds() bool {
@@ -438,16 +490,21 @@ const file_proto_claims_provider_proto_rawDesc = "" +
 	"\x0fpatreon_user_id\x18\x02 \x01(\tR\rpatreonUserId\"*\n" +
 	"\x04Tier\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"n\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"/\n" +
+	"\x05Vault\x12\x1b\n" +
+	"\x06points\x18\x01 \x01(\x04H\x00R\x06points\x88\x01\x01B\t\n" +
+	"\a_points\"\x8c\x01\n" +
 	"\x06Claims\x12+\n" +
 	"\n" +
 	"connection\x18\x01 \x01(\v2\v.ConnectionR\n" +
 	"connection\x12\x1c\n" +
 	"\x05embed\x18\x02 \x01(\v2\x06.EmbedR\x05embed\x12\x19\n" +
-	"\x04site\x18\x03 \x01(\v2\x05.SiteR\x04site\" \n" +
+	"\x04site\x18\x03 \x01(\v2\x05.SiteR\x04site\x12\x1c\n" +
+	"\x05vault\x18\x04 \x01(\v2\x06.VaultR\x05vault\".\n" +
 	"\n" +
-	"Connection\x12\x12\n" +
-	"\x04rate\x18\x01 \x01(\x04R\x04rate\"\x1e\n" +
+	"Connection\x12\x17\n" +
+	"\x04rate\x18\x01 \x01(\x04H\x00R\x04rate\x88\x01\x01B\a\n" +
+	"\x05_rate\"\x1e\n" +
 	"\x05Embed\x12\x15\n" +
 	"\x06no_ads\x18\x01 \x01(\bR\x05noAds\"\x1d\n" +
 	"\x04Site\x12\x15\n" +
@@ -467,31 +524,33 @@ func file_proto_claims_provider_proto_rawDescGZIP() []byte {
 	return file_proto_claims_provider_proto_rawDescData
 }
 
-var file_proto_claims_provider_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_proto_claims_provider_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_proto_claims_provider_proto_goTypes = []any{
 	(*GetRequest)(nil),  // 0: GetRequest
 	(*GetResponse)(nil), // 1: GetResponse
 	(*Context)(nil),     // 2: Context
 	(*Tier)(nil),        // 3: Tier
-	(*Claims)(nil),      // 4: Claims
-	(*Connection)(nil),  // 5: Connection
-	(*Embed)(nil),       // 6: Embed
-	(*Site)(nil),        // 7: Site
+	(*Vault)(nil),       // 4: Vault
+	(*Claims)(nil),      // 5: Claims
+	(*Connection)(nil),  // 6: Connection
+	(*Embed)(nil),       // 7: Embed
+	(*Site)(nil),        // 8: Site
 }
 var file_proto_claims_provider_proto_depIdxs = []int32{
 	2, // 0: GetResponse.context:type_name -> Context
-	4, // 1: GetResponse.claims:type_name -> Claims
+	5, // 1: GetResponse.claims:type_name -> Claims
 	3, // 2: Context.tier:type_name -> Tier
-	5, // 3: Claims.connection:type_name -> Connection
-	6, // 4: Claims.embed:type_name -> Embed
-	7, // 5: Claims.site:type_name -> Site
-	0, // 6: ClaimsProvider.Get:input_type -> GetRequest
-	1, // 7: ClaimsProvider.Get:output_type -> GetResponse
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	6, // 3: Claims.connection:type_name -> Connection
+	7, // 4: Claims.embed:type_name -> Embed
+	8, // 5: Claims.site:type_name -> Site
+	4, // 6: Claims.vault:type_name -> Vault
+	0, // 7: ClaimsProvider.Get:input_type -> GetRequest
+	1, // 8: ClaimsProvider.Get:output_type -> GetResponse
+	8, // [8:9] is the sub-list for method output_type
+	7, // [7:8] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_proto_claims_provider_proto_init() }
@@ -499,13 +558,15 @@ func file_proto_claims_provider_proto_init() {
 	if File_proto_claims_provider_proto != nil {
 		return
 	}
+	file_proto_claims_provider_proto_msgTypes[4].OneofWrappers = []any{}
+	file_proto_claims_provider_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_claims_provider_proto_rawDesc), len(file_proto_claims_provider_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

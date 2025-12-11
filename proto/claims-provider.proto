@@ -26,14 +26,19 @@ message Tier {
     string name = 2;
 }
 
+message Vault {
+    optional uint64 points = 1;
+}
+
 message Claims {
     Connection connection = 1;
     Embed embed = 2;
     Site site = 3;
+    Vault vault = 4;
 }
 
 message Connection {
-    uint64 rate = 1;
+    optional uint64 rate = 1;
 }
 
 message Embed {

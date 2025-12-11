@@ -183,6 +183,9 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 			Site: &pb.Site{
 				NoAds: c.SiteNoAds,
 			},
+			Vault: &pb.Vault{
+				Points: c.VaultPoints,
+			},
 		},
 	}, nil
 }
