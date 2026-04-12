@@ -131,30 +131,48 @@ func (s *GRPC) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, er
 		patreonUserID = req.PatreonUserId
 	}
 	var (
-		c   *models.Claims
-		cs  []*models.Claims
-		err error
+		c          *models.Claims
+		cs         []*models.Claims
+		lastErr    error
+		anySuccess bool
 	)
 	if patreonUserID != "" {
-		c, err = s.store.GetByPatreonID(ctx, patreonUserID)
+		c, err := s.store.GetByPatreonID(ctx, patreonUserID)
+		if err != nil {
+			lastErr = err
+			log.WithField("patreon_id", patreonUserID).WithError(err).Warn("failed to get claims by patreon id")
+		} else {
+			anySuccess = true
+		}
 		if c != nil {
 			cs = append(cs, c)
 		}
 	}
-	c, err = s.store.GetByEmail(ctx, email)
-	if c != nil {
-		cs = append(cs, c)
+	{
+		c, err := s.store.GetByEmail(ctx, email)
+		if err != nil {
+			lastErr = err
+			log.WithField("email", email).WithError(err).Warn("failed to get claims by email")
+		} else {
+			anySuccess = true
+		}
+		if c != nil {
+			cs = append(cs, c)
+		}
 	}
-	if err == nil && len(cs) == 0 {
-		err = errors.New("no claims found")
-	}
-	if err != nil {
-		// Log detailed context while keeping client-facing error generic
+	if !anySuccess {
 		log.WithFields(log.Fields{
 			"email":      email,
 			"patreon_id": patreonUserID,
-		}).WithError(err).Error("failed to get claims from store")
+		}).WithError(lastErr).Error("failed to get claims from store")
 		return nil, status.Error(codes.Internal, "failed to get claims")
+	}
+	if len(cs) == 0 {
+		log.WithFields(log.Fields{
+			"email":      email,
+			"patreon_id": patreonUserID,
+		}).Error("no claims found")
+		return nil, status.Error(codes.NotFound, "no claims found")
 	}
 
 	// Sort claims by tier ID in descending order
