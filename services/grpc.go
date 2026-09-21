@@ -74,39 +74,64 @@ func (s *GRPC) Serve() error {
 	// Save the listener
 	s.ln = listener
 
-	// Create a new gRPC server with a logger interceptor
-	serverOpts := []grpc.ServerOption{
-		grpc.UnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-			start := time.Now()
-			fields := log.Fields{
-				"method": info.FullMethod,
-			}
-			if r, ok := req.(*pb.GetRequest); ok {
-				fields["email"] = r.Email
-				fields["patreon_user_id"] = r.PatreonUserId
-			}
-			resp, err := handler(ctx, req)
-			fields["took"] = time.Since(start)
-			if err != nil {
-				log.WithFields(fields).WithError(err).Error("grpc unary call failed")
-			} else {
-				log.WithFields(fields).Info("grpc unary call succeeded")
-			}
-			return resp, err
-		}),
-	}
-	gs := grpc.NewServer(serverOpts...)
+	gs := s.newServer()
 	// store server pointer for graceful shutdown
 	s.srv = gs
-
-	// Register the service
-	pb.RegisterClaimsProviderServer(gs, s)
 
 	// Log the start message
 	log.Infof("serving GRPC at %v", addr)
 
 	// Start the server
 	return gs.Serve(listener)
+}
+
+// newServer builds the gRPC server with its interceptors and the service
+// registered. Split from Serve so a test can drive the same server over an
+// in-memory listener.
+func (s *GRPC) newServer() *grpc.Server {
+	// Metrics interceptor goes first so its timing covers the logging one
+	// as well — the histogram then measures what the client sees.
+	serverOpts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(
+			grpcMetrics.UnaryServerInterceptor(),
+			logUnaryInterceptor,
+		),
+		grpc.ChainStreamInterceptor(
+			grpcMetrics.StreamServerInterceptor(),
+		),
+	}
+	gs := grpc.NewServer(serverOpts...)
+
+	// Register the service
+	pb.RegisterClaimsProviderServer(gs, s)
+
+	// Pre-populate the per-method series with zero values, so a method that
+	// has not been called yet still shows up (and a rate() over it is 0,
+	// not absent). Must run after registration — it reads the service info.
+	grpcMetrics.InitializeMetrics(gs)
+
+	return gs
+}
+
+// logUnaryInterceptor logs every unary call with its identity fields and
+// duration.
+func logUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	start := time.Now()
+	fields := log.Fields{
+		"method": info.FullMethod,
+	}
+	if r, ok := req.(*pb.GetRequest); ok {
+		fields["email"] = r.Email
+		fields["patreon_user_id"] = r.PatreonUserId
+	}
+	resp, err := handler(ctx, req)
+	fields["took"] = time.Since(start)
+	if err != nil {
+		log.WithFields(fields).WithError(err).Error("grpc unary call failed")
+	} else {
+		log.WithFields(fields).Info("grpc unary call succeeded")
+	}
+	return resp, err
 }
 
 // Close stops the gRPC server and releases the listener

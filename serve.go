@@ -20,6 +20,7 @@ func makeServeCMD() cli.Command {
 
 func configureServe(c *cli.Command) {
 	c.Flags = cs.RegisterProbeFlags(c.Flags)
+	c.Flags = cs.RegisterPromFlags(c.Flags)
 	c.Flags = s.RegisterGRPCFlags(c.Flags)
 	c.Flags = s.RegisterStoreFlags(c.Flags)
 	c.Flags = cs.RegisterPGFlags(c.Flags)
@@ -36,6 +37,14 @@ func serve(c *cli.Context) error {
 	probe := cs.NewProbe(c)
 	servers = append(servers, probe)
 	defer probe.Close()
+
+	// Setting Prom — /metrics on its own port, exposing the default registry
+	// the gRPC interceptors and store lookups write into.
+	prom := cs.NewProm(c)
+	if prom != nil {
+		servers = append(servers, prom)
+		defer prom.Close()
+	}
 
 	// Setting Store
 	store := s.NewStore(c, pg)

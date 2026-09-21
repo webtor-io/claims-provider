@@ -117,7 +117,7 @@ func (s *Store) GetByEmail(ctx context.Context, email string) (claims *models.Cl
 	if s.fetch != nil {
 		builder = func() (*models.Claims, error) { return s.fetch(ctx, email) }
 	}
-	return s.LazyMap.Get("email:"+email, builder)
+	return s.LazyMap.Get("email:"+email, instrumentLookup(lookupSourceEmail, builder))
 }
 
 func (s *Store) GetByPatreonID(ctx context.Context, patreonID string) (claims *models.Claims, err error) {
@@ -125,5 +125,5 @@ func (s *Store) GetByPatreonID(ctx context.Context, patreonID string) (claims *m
 	if s.fetchByPatreonID != nil {
 		builder = func() (*models.Claims, error) { return s.fetchByPatreonID(ctx, patreonID) }
 	}
-	return s.LazyMap.Get("patreon:"+patreonID, builder)
+	return s.LazyMap.Get("patreon:"+patreonID, instrumentLookup(lookupSourcePatreonID, builder))
 }
