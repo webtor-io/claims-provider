@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli v1.22.17
-	github.com/webtor-io/common-services v0.0.0-20260323152956-4a4e97f013f7
+	github.com/webtor-io/common-services v0.0.0-20260927094256-ddfbf24ea805
 	github.com/webtor-io/lazymap v0.0.0-20250308124910-3a61e0f78108
 	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.10
