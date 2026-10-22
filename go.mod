@@ -1,6 +1,6 @@
 module github.com/webtor-io/claims-provider
 
-go 1.25
+go 1.27
 
 require (
 	github.com/go-pg/pg/v10 v10.15.0
